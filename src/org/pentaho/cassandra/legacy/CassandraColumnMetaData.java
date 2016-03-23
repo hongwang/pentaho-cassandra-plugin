@@ -205,9 +205,8 @@ public class CassandraColumnMetaData implements ColumnFamilyMetaData {
         "caching" ), COMPACTION_STRATEGY_CLASS( "compaction_strategy_class" ), COMPACTION_STRATEGY_OPTIONS( //$NON-NLS-1$ //$NON-NLS-2$
         "compaction_strategy_options" ), COMPRESSION_PARAMETERS( "compression_parameters" ), GC_GRACE_SECONDS( //$NON-NLS-1$ //$NON-NLS-2$
         "gc_grace_seconds" ), LOCAL_READ_REPAIR_CHANCE( "local_read_repair_chance" ), MAX_COMPACTION_THRESHOLD( //$NON-NLS-1$ //$NON-NLS-2$
-        "max_compaction_threshold" ), MIN_COMPACTION_THRESHOLD( "min_compaction_threshold" ), POPULATE_IO_CACHE_ON_FLUSH( //$NON-NLS-1$ //$NON-NLS-2$
-        "populate_io_cache_on_flush" ), READ_REPAIR_CHANCE( "read_repair_chance" ), REPLICATE_ON_WRITE( //$NON-NLS-1$ //$NON-NLS-2$
-        "replicate_on_write" ), TYPE( "type" ), VALUE_ALIAS( "value_alias" ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        "max_compaction_threshold" ), MIN_COMPACTION_THRESHOLD( "min_compaction_threshold" ), READ_REPAIR_CHANCE( "read_repair_chance" ), TYPE(  //$NON-NLS-1$ //$NON-NLS-2$
+        "type" ), VALUE_ALIAS( "value_alias" ); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
     private final String m_name;
 
@@ -261,8 +260,8 @@ public class CassandraColumnMetaData implements ColumnFamilyMetaData {
         + CFMetaDataElements.COMPACTION_STRATEGY_OPTIONS + ", " + CFMetaDataElements.COMPRESSION_PARAMETERS + ", " //$NON-NLS-1$ //$NON-NLS-2$
         + CFMetaDataElements.GC_GRACE_SECONDS + ", " + CFMetaDataElements.LOCAL_READ_REPAIR_CHANCE + ", " //$NON-NLS-1$ //$NON-NLS-2$
         + CFMetaDataElements.MAX_COMPACTION_THRESHOLD + ", " + CFMetaDataElements.MIN_COMPACTION_THRESHOLD + ", " //$NON-NLS-1$ //$NON-NLS-2$
-        + CFMetaDataElements.POPULATE_IO_CACHE_ON_FLUSH + ", " + CFMetaDataElements.READ_REPAIR_CHANCE + ", " //$NON-NLS-1$ //$NON-NLS-2$
-        + CFMetaDataElements.REPLICATE_ON_WRITE + ", " + CFMetaDataElements.TYPE + ", " //$NON-NLS-1$ //$NON-NLS-2$
+        + CFMetaDataElements.READ_REPAIR_CHANCE + ", " //$NON-NLS-1$ //$NON-NLS-2$
+        + CFMetaDataElements.TYPE + ", " //$NON-NLS-1$ //$NON-NLS-2$
         + CFMetaDataElements.VALUE_ALIAS + " from system.schema_columnfamilies where keyspace_name='" //$NON-NLS-1$
         + conn.m_keyspaceName + "' and columnfamily_name='" + m_columnFamilyName + "';"; //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -650,29 +649,12 @@ public class CassandraColumnMetaData implements ColumnFamilyMetaData {
           + compV.toString() );
     }
 
-    // populate IO cache on flush
-    Column pop = cols.get( CFMetaDataElements.POPULATE_IO_CACHE_ON_FLUSH.ordinal() );
-    axDeserializer = BooleanType.instance;
-    if ( pop != null && pop.bufferForValue() != null ) {
-      Object popV = axDeserializer.compose( pop.bufferForValue() );
-      m_schemaDescription.append( "\n\tPopulate IO cache on flush: " //$NON-NLS-1$
-          + popV.toString() );
-    }
-
     // read repair chance
     Column readRep = cols.get( CFMetaDataElements.READ_REPAIR_CHANCE.ordinal() );
     axDeserializer = DoubleType.instance;
     if ( readRep != null && readRep.bufferForValue() != null ) {
       Object readV = axDeserializer.compose( readRep.bufferForValue() );
       m_schemaDescription.append( "\n\tRead repair chance: " + readV.toString() ); //$NON-NLS-1$
-    }
-
-    // replicate on write
-    Column repWrite = cols.get( CFMetaDataElements.REPLICATE_ON_WRITE.ordinal() );
-    axDeserializer = BooleanType.instance;
-    if ( repWrite != null && repWrite.bufferForValue() != null ) {
-      Object repV = axDeserializer.compose( repWrite.bufferForValue() );
-      m_schemaDescription.append( "\n\tReplicate on write: " + repV.toString() ); //$NON-NLS-1$
     }
 
     // type?
@@ -817,8 +799,6 @@ public class CassandraColumnMetaData implements ColumnFamilyMetaData {
             + fam.getMin_compaction_threshold() );
         m_schemaDescription.append( "\n\tMax compaction threshold: " //$NON-NLS-1$
             + fam.getMax_compaction_threshold() );
-        m_schemaDescription.append( "\n\tReplicate on write: " //$NON-NLS-1$
-            + fam.replicate_on_write );
         // String rowCacheP = fam.getRow_cache_provider();
 
         m_schemaDescription.append( "\n\n\tColumn metadata:" ); //$NON-NLS-1$
@@ -1402,10 +1382,10 @@ public class CassandraColumnMetaData implements ColumnFamilyMetaData {
 
   /**
    * Get the Kettle ValueMeta that corresponds to the type of the supplied cassandra element: column of function.
-   * 
+   *
    * @param selector the selector that corresponds either to Cassandra column name or Cassandra function to get the
    * Kettle type
-   * 
+   *
    * @return the Kettle type for the selector
    */
   public ValueMetaInterface getValueMeta( Selector selector ) {
@@ -1676,7 +1656,7 @@ public class CassandraColumnMetaData implements ColumnFamilyMetaData {
 
   /**
    * Decode the supplied thrift column value for the cassandra column.
-   * 
+   *
    * @param aCol the thrift column
    * @return decoded value
    * @throws KettleException if any exception occurs
@@ -1705,7 +1685,7 @@ public class CassandraColumnMetaData implements ColumnFamilyMetaData {
 
   /**
    * Decode the supplied thrift column value.
-   * 
+   *
    * @param aCol
    *          the thrift column
    * @param decoder
@@ -1733,7 +1713,7 @@ public class CassandraColumnMetaData implements ColumnFamilyMetaData {
 
   /**
    * Processes indexed values for the column.
-   * 
+   *
    * @param colName
    *          the name of the column
    * @param colValue
@@ -1809,7 +1789,7 @@ public class CassandraColumnMetaData implements ColumnFamilyMetaData {
 
   /**
    * Returns the partitioner.
-   * 
+   *
    * @param conn
    *          the connection to use
    * @param c
@@ -1833,7 +1813,7 @@ public class CassandraColumnMetaData implements ColumnFamilyMetaData {
 
   /**
    * Returns the mapping of the cassandra functions to its validators.
-   * 
+   *
    * @param conn
    *          the connection to use
    * @param c
