@@ -56,7 +56,7 @@ import com.google.common.base.Joiner;
 
 /**
  * Static utility routines for various stuff
- * 
+ *
  * @author Mark Hall (mhall{[at]}pentaho{[dot]}com)
  */
 public class CassandraUtils {
@@ -89,7 +89,7 @@ public class CassandraUtils {
    * for column definitions. The CQL reference guide states that fully qualified (or relative to
    * org.apache.cassandra.db.marshal) class names can be used instead of CQL types - however, using these when defining
    * the key type always results in BytesType getting set for the key for some reason.
-   * 
+   *
    * @param vm
    *          the ValueMetaInterface for the Kettle column
    * @return the corresponding CQL type
@@ -119,7 +119,7 @@ public class CassandraUtils {
 
   /**
    * Split a script containing one or more CQL statements (terminated by ;'s) into a list of individual statements.
-   * 
+   *
    * @param source
    *          the source script
    * @return a list of individual CQL statements
@@ -144,7 +144,7 @@ public class CassandraUtils {
 
   /**
    * Compress a CQL query
-   * 
+   *
    * @param queryStr
    *          the CQL query
    * @param compression
@@ -176,7 +176,7 @@ public class CassandraUtils {
   /**
    * Extract the column family name (table name) from a CQL SELECT query. Assumes that any kettle variables have been
    * already substituted in the query
-   * 
+   *
    * @param subQ
    *          the query with vars substituted
    * @return the column family name or null if the query is malformed
@@ -240,7 +240,7 @@ public class CassandraUtils {
 
   /**
    * Return a string representation of a Kettle row
-   * 
+   *
    * @param row
    *          the row to return as a string
    * @return a string representation of the row
@@ -262,7 +262,7 @@ public class CassandraUtils {
 
   /**
    * Checks for null row key and rows with no non-null values
-   * 
+   *
    * @param inputMeta
    *          the input row meta
    * @param keyColNames
@@ -323,7 +323,7 @@ public class CassandraUtils {
 
   /**
    * Creates a new batch for non-CQL based write operations
-   * 
+   *
    * @param numRows
    *          the size of the batch in rows
    * @return the new batch
@@ -337,7 +337,7 @@ public class CassandraUtils {
   /**
    * Adds a row to the current non-CQL batch. Might not add a row if the row does not contain at least one non-null
    * value appart from the key.
-   * 
+   *
    * @param batch
    *          the batch to add to
    * @param row
@@ -382,7 +382,7 @@ public class CassandraUtils {
 
   /**
    * Begin a new batch cql statement
-   * 
+   *
    * @param numRows
    *          the number of rows to be inserted in this batch
    * @param consistency
@@ -415,7 +415,7 @@ public class CassandraUtils {
 
   /**
    * Append the "APPLY BATCH" statement to complete the batch
-   * 
+   *
    * @param batch
    *          the StringBuilder batch to complete
    */
@@ -425,7 +425,7 @@ public class CassandraUtils {
 
   /**
    * Returns the quote character to use with a given major version of CQL
-   * 
+   *
    * @param cqlMajVersion
    *          the major version of the CQL in use
    * @return the quote character that can be used to surround identifiers (e.g. column names).
@@ -440,7 +440,7 @@ public class CassandraUtils {
 
   /**
    * converts a kettle row to CQL insert statement and adds it to the batch
-   * 
+   *
    * @param batch
    *          StringBuilder for collecting the batch CQL
    * @param colFamilyName
@@ -581,7 +581,7 @@ public class CassandraUtils {
   /**
    * Remove enclosing quotes from a string. Useful for quoted mixed case CQL 3 identifiers where we want to remove the
    * quotes in order to match successfully against entries in various system tables
-   * 
+   *
    * @param source
    *          the source string
    * @return the dequoted string
@@ -602,7 +602,7 @@ public class CassandraUtils {
 
   /**
    * Quotes an identifier (for CQL 3) if it contains mixed case
-   * 
+   *
    * @param source
    *          the source string
    * @return the quoted string
@@ -619,7 +619,7 @@ public class CassandraUtils {
   /**
    * Static utility method that converts a Kettle value into an appropriately encoded CQL string. Does not handle
    * collection types yet.
-   * 
+   *
    * @param vm
    *          the ValueMeta for the Kettle value
    * @param value
@@ -633,6 +633,8 @@ public class CassandraUtils {
   public static String kettleValueToCQL( ValueMetaInterface vm, Object value, int cqlMajVersion )
     throws KettleValueException {
 
+    // UUID switch
+    boolean checkStringsForUUID = true;
     String quote = cqlMajVersion == 2 ? "'" : ""; //$NON-NLS-1$ //$NON-NLS-2$
     switch ( vm.getType() ) {
       case ValueMetaInterface.TYPE_STRING: {
@@ -640,7 +642,16 @@ public class CassandraUtils {
         String toConvert = vm.getString( value );
         ByteBuffer decomposed = u.decompose( toConvert );
         String cassandraString = u.getString( decomposed );
-        return "'" + escapeSingleQuotes( cassandraString ) + "'"; //$NON-NLS-1$ //$NON-NLS-2$
+        //return "'" + escapeSingleQuotes( cassandraString ) + "'"; //$NON-NLS-1$ //$NON-NLS-2$
+        if(checkStringsForUUID) {
+          try {
+            // test to see if this string appears to be a UUID and if so, treat it as one and do not quote
+            java.util.UUID.fromString(cassandraString);
+            return cassandraString;
+          } catch (IllegalArgumentException iae) {
+            return "'" + escapeSingleQuotes(cassandraString) + "'"; //$NON-NLS-1$ //$NON-NLS-2$
+          }
+        }
       }
       case ValueMetaInterface.TYPE_BIGNUMBER: {
         DecimalType dt = DecimalType.instance;
@@ -704,7 +715,7 @@ public class CassandraUtils {
 
   /**
    * Return a one line string representation of an options map
-   * 
+   *
    * @param opts
    *          the options to return as a string
    * @return a one line string representation of a map of options
@@ -725,7 +736,7 @@ public class CassandraUtils {
 
   /**
    * Returns how many fields (including the key) will be written given the incoming Kettle row format
-   * 
+   *
    * @param inputMeta
    *          the incoming Kettle row format
    * @param keyIndex
@@ -761,7 +772,7 @@ public class CassandraUtils {
 
   /**
    * Get a connection to cassandra
-   * 
+   *
    * @param host
    *          the hostname of a cassandra node
    * @param port
