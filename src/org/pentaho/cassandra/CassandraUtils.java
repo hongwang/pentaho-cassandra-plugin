@@ -555,6 +555,7 @@ public class CassandraUtils {
 
     batch.append( "\n" ); //$NON-NLS-1$
 
+    log.logDetailed( "Exeucting: " + batch.toString() );
     return true;
   }
 
