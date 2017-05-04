@@ -273,7 +273,7 @@ public class LegacyCQLRowHandler implements CQLRowHandler {
     m_outputTuples = outputTuples;
     m_requestingStep = requestingStep;
 
-    ConsistencyLevel c = ConsistencyLevel.ONE; // default for CQL
+    ConsistencyLevel c = ConsistencyLevel.LOCAL_ONE; // default for CQL
     Compression z = Compression.NONE;
 
     if ( !Const.isEmpty( consistencyLevel ) ) {
